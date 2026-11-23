@@ -1,0 +1,19 @@
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.log
+
+# Base de datos local embebida (PGlite)
+app/db/pglite-data/
+app/.data/
+
+# Entorno
+.env
+.env.local
+.env.*.local
+
+# Sistema
+.DS_Store
+Thumbs.db

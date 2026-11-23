@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Presentación · Intendencia de Aulas MVP</title>
+  <style>
+    :root{--bg:#0b2545;--ink:#14213d;--muted:#5b657a;--line:#dbe3ee;--brand:#1d4ed8;--soft:#f5f8fc;--ok:#0f766e}
+    *{box-sizing:border-box} body{margin:0;font-family:Segoe UI,Arial,sans-serif;color:var(--ink);background:#fff;line-height:1.45}
+    .wrap{max-width:1100px;margin:0 auto;padding:0 24px} header{background:linear-gradient(135deg,var(--bg),#163a63);color:#fff;padding:56px 0}
+    .kicker{font-size:12px;letter-spacing:.2em;text-transform:uppercase;opacity:.75} h1{font-size:44px;line-height:1.1;margin:12px 0 16px;max-width:800px}
+    .lead{max-width:760px;font-size:18px;opacity:.9} .pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+    .pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);padding:8px 12px;border-radius:999px;font-size:13px}
+    section{padding:48px 0;border-bottom:1px solid var(--line)} h2{font-size:28px;margin:0 0 8px} p.sec{color:var(--muted);margin:0 0 24px}
+    .grid{display:grid;gap:16px} .g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))} .g3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    .card{border:1px solid var(--line);border-radius:14px;padding:18px;background:#fff} .card h3{margin:0 0 8px;font-size:16px} .card p,.card li{color:#334155;font-size:14px}
+    ul{margin:0;padding-left:18px} .flow{counter-reset:step;display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+    .step{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:16px} .step::before{counter-increment:step;content:"0" counter(step);display:inline-block;font-weight:700;color:var(--brand);margin-bottom:8px}
+    table{width:100%;border-collapse:collapse;font-size:14px} th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+    th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#475569;background:var(--soft)} .tag{display:inline-block;padding:2px 8px;border-radius:999px;background:#ecfdf5;color:var(--ok);font-size:12px;font-weight:600}
+    .warn{background:#fff7ed;color:#9a3412} footer{padding:28px 0;color:var(--muted);font-size:13px}
+    .cta{display:inline-block;margin-top:20px;background:#fff;color:var(--bg);padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600}
+    @media (max-width:700px){h1{font-size:34px}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="kicker">Transformación Digital · Intendencia</div>
+    <h1>Intendencia de Aulas</h1>
+    <p class="lead">MVP para digitalizar la solicitud de programación por ciclo, conservar versiones inmutables y trazabilidad. El solicitante registra la programación; la asignación administrativa de aula está diferida en la fase actual (ADR-009).</p>
+    <div class="pills">
+      <div class="pill">8 tablas PostgreSQL</div><div class="pill">3 roles operativos</div><div class="pill">Versionado inmutable</div><div class="pill">Importación Excel con preview</div>
+    </div>
+    <a class="cta" href="../app/README.md">Ver instrucciones técnicas</a>
+  </div>
+</header>
+
+<section><div class="wrap grid g2">
+  <div><h2>Problema</h2><p class="sec">La programación se recibe en múltiples Excel, se consolida manualmente y se pierde trazabilidad.</p>
+    <ul><li>Archivos dispersos por facultad/ciclo.</li><li>Sin historial confiable de cambios.</li><li>Se mezcla requerimiento de unidad con decisión de Intendencia.</li><li>Difícil auditar quién cambió qué y cuándo.</li></ul></div>
+  <div><h2>Objetivo del MVP</h2><p class="sec">Centralizar solicitudes por unidad y ciclo, con flujo claro y datos estructurados.</p>
+    <div class="card"><ul>
+      <li>Login simulado Google + autorización local.</li><li>Solicitud por unidad/ciclo con múltiples filas.</li><li>Versiones completas e inmutables.</li><li>Asignación de aulas solo por Intendencia.</li><li>Exportación Excel/CSV y métricas.</li>
+    </ul></div></div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Flujo de demostración</h2><p class="sec">Guion E2E del MVP.</p>
+  <div class="flow">
+    <div class="step"><h3>Ingreso</h3><p>Cuenta simulada; se valida rol, autorización y unidad.</p></div>
+    <div class="step"><h3>Programación</h3><p>La unidad captura filas o importa Excel con vista previa.</p></div>
+    <div class="step"><h3>Versión</h3><p>Se guarda una fotografía completa con autor y fecha.</p></div>
+    <div class="step"><h3>Fase posterior</h3><p>La asignación administrativa de aulas queda diferida. El modelo conserva el campo de aula para activarla en una fase futura.</p></div>
+    <div class="step"><h3>Trazabilidad</h3><p>Cada guardado crea una nueva versión; el historial se conserva.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Alcance funcional</h2><p class="sec">Estado del MVP construido en `app/`.</p>
+  <table><thead><tr><th>Feature</th><th>Resultado</th><th>Estado</th></tr></thead><tbody>
+    <tr><td>F-00 Fundaciones</td><td>Next.js + PGlite + esquema 8 tablas + seed</td><td><span class="tag">Listo</span></td></tr>
+    <tr><td>F-01 Auth</td><td>Login Google simulado, sesión, RBAC</td><td><span class="tag">Listo</span></td></tr>
+    <tr><td>F-02 Catálogos</td><td>Usuarios, ciclos, cursos, aulas</td><td><span class="tag">Listo</span></td></tr>
+    <tr><td>F-03 Solicitud/versionado</td><td>Editor, validaciones, versiones inmutables</td><td><span class="tag">Listo</span></td></tr>
+    <tr><td>F-04 Excel</td><td>Plantilla, import preview, export XLSX/CSV</td><td><span class="tag">Listo</span></td></tr>
+    <tr><td>F-05 Administración de aulas</td><td>Asignación administrativa de aulas</td><td><span class="tag warn">Diferida (ADR-009)</span></td></tr>
+    <tr><td>F-06 Dashboard/presentación</td><td>Métricas, presentación, docs SDD</td><td><span class="tag">Listo</span></td></tr>
+  </tbody></table>
+</div></section>
+
+<section><div class="wrap grid g2">
+  <div><h2>Garantías de diseño</h2><p class="sec">Reglas no negociables.</p>
+    <div class="card"><ul>
+      <li>El solicitante no asigna aulas; la asignación administrativa está diferida.</li><li>Versiones inmutables: corregir = nueva versión; v1 es programación de inicio.</li><li>Validación en servidor y transacciones.</li><li>Aislamiento por unidad académica para rol SOLICITANTE.</li><li>Sin borrado físico de históricos.</li>
+    </ul></div></div>
+  <div><h2>Pendientes de validación</h2><p class="sec">Decisiones del documento PD-01..PD-14.</p>
+    <div class="card"><ul>
+      <li><span class="tag warn">PD-01</span> Unidad: facultad/programa/jerarquía.</li>
+      <li><span class="tag warn">PD-03</span> Estados y transiciones definitivas.</li>
+      <li><span class="tag warn">PD-04</span> Edición tras cierre/asignación.</li>
+      <li><span class="tag warn">PD-08</span> Reglas de asignación y desempate.</li>
+      <li><span class="tag warn">PD-11</span> Integración SIPUC.</li>
+    </ul></div></div>
+</div></section>
+
+<footer><div class="wrap">
+  MVP de demostración · Datos ficticios · Fuente: Documentación Integral v1.0 (23-nov-2026). Para ejecutar: <code>cd app && npm install && npm run dev</code>.
+</div></footer>
+</body>
+</html>
