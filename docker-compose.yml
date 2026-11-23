@@ -1,0 +1,18 @@
+services:
+  intendencia-aulas:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: intendencia-aulas
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      SESSION_SECRET: ${SESSION_SECRET:-cambiar-este-valor-en-produccion}
+      PGLITE_DATA_DIR: /app/db/pglite-data
+    volumes:
+      - pglite-data:/app/db/pglite-data
+    restart: unless-stopped
+
+volumes:
+  pglite-data:

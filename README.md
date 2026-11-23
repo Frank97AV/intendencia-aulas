@@ -76,6 +76,25 @@ npm run db:reset  # Borra PGlite local; se recrea al iniciar
 - `chrome-devtools` (local, npx) para E2E.
 - `context7` (remoto, deshabilitado por defecto). Activar con `CONTEXT7_API_KEY`.
 
+## Ejecución con Docker
+
+Requisitos: Docker Desktop / Docker Engine + Docker Compose.
+
+```bash
+# Desde la raíz del repo
+docker compose up --build
+```
+
+Abrir `http://localhost:3000/login`.
+
+Variables relevantes:
+- `SESSION_SECRET`: secreto de sesión (definir en entorno o `.env` junto a `docker-compose.yml`).
+- `PGLITE_DATA_DIR`: ruta interna de datos PGlite (por defecto `/app/db/pglite-data`).
+
+Persistencia:
+- `docker-compose.yml` monta el volumen nombrado `pglite-data` en `/app/db/pglite-data`.
+- Para reiniciar datos demo: `docker compose down -v` y volver a levantar.
+
 ## Reglas clave
 
 - El solicitante registra programación; la asignación de aula es administrativa y está diferida (ADR-009).
