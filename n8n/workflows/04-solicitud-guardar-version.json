@@ -1,0 +1,73 @@
+{
+  "name": "04-solicitud-guardar-version",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "solicitudes/guardar", "responseMode": "responseNode", "options": {} },
+      "id": "1",
+      "name": "Webhook Guardar",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "workflowId": "SW-VALIDAR-FILAS",
+        "options": {}
+      },
+      "id": "2",
+      "name": "SW Validar Filas",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{ $json.ok }}", "value2": true }
+          ]
+        }
+      },
+      "id": "3",
+      "name": "¿Válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "workflowId": "SW-CREAR-VERSION-INMUTABLE",
+        "options": {}
+      },
+      "id": "4",
+      "name": "SW Crear Versión",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [920, 220]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} },
+      "id": "5",
+      "name": "Responder OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1140, 220]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": { "responseCode": 400 } },
+      "id": "6",
+      "name": "Responder Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [920, 400]
+    }
+  ],
+  "connections": {
+    "Webhook Guardar": { "main": [[{ "node": "SW Validar Filas", "type": "main", "index": 0 }]] },
+    "SW Validar Filas": { "main": [[{ "node": "¿Válido?", "type": "main", "index": 0 }]] },
+    "¿Válido?": { "main": [[{ "node": "SW Crear Versión", "type": "main", "index": 0 }], [{ "node": "Responder Error", "type": "main", "index": 0 }]] },
+    "SW Crear Versión": { "main": [[{ "node": "Responder OK", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

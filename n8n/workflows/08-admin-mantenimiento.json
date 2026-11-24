@@ -1,0 +1,14 @@
+{
+  "name": "08-admin-mantenimiento",
+  "nodes": [
+    { "parameters": { "httpMethod": "POST", "path": "admin/mantenimiento", "responseMode": "responseNode", "options": {} }, "id": "1", "name": "Webhook Admin", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [240, 300] },
+    { "parameters": { "jsCode": "// Starter: acciones admin (cambiar estado solicitud, autorizar usuario, etc.)\n// Siempre validar rol ADMIN con SW-VALIDAR-USUARIO.\nreturn [{json:{ok:true, mensaje:'Implementar mantenimiento admin', input:$json.body ?? $json}}];" }, "id": "2", "name": "Acción admin (starter)", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [500, 300] },
+    { "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} }, "id": "3", "name": "Responder", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.1, "position": [740, 300] }
+  ],
+  "connections": {
+    "Webhook Admin": { "main": [[{ "node": "Acción admin (starter)", "type": "main", "index": 0 }]] },
+    "Acción admin (starter)": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

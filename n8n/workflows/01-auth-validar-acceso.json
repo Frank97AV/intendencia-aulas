@@ -1,0 +1,14 @@
+{
+  "name": "01-auth-validar-acceso",
+  "nodes": [
+    { "parameters": { "httpMethod": "POST", "path": "auth/validar", "responseMode": "responseNode", "options": {} }, "id": "1", "name": "Webhook Auth", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [240, 300] },
+    { "parameters": { "workflowId": "SW-VALIDAR-USUARIO", "options": {} }, "id": "2", "name": "SW Validar Usuario", "type": "n8n-nodes-base.executeWorkflow", "typeVersion": 1.1, "position": [480, 300] },
+    { "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} }, "id": "3", "name": "Responder", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.1, "position": [720, 300] }
+  ],
+  "connections": {
+    "Webhook Auth": { "main": [[{ "node": "SW Validar Usuario", "type": "main", "index": 0 }]] },
+    "SW Validar Usuario": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

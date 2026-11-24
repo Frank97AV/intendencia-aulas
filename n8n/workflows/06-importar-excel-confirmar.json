@@ -1,0 +1,81 @@
+{
+  "name": "06-importar-excel-confirmar",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "import/confirmar", "responseMode": "responseNode", "options": {} },
+      "id": "1",
+      "name": "Webhook Confirmar",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": { "jsCode": "const body = $json.body ?? $json;\nreturn [{json:{\n  idSolicitud: body.idSolicitud,\n  idUsuario: body.idUsuario,\n  observacion: body.observacion || 'Importación Excel',\n  estado: body.estado || 'REGISTRADA',\n  filas: body.filas || body.rows || []\n}}];" },
+      "id": "2",
+      "name": "Preparar entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": { "workflowId": "SW-VALIDAR-FILAS", "options": {} },
+      "id": "3",
+      "name": "SW Validar Filas",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [660, 300]
+    },
+    {
+      "parameters": { "conditions": { "boolean": [{ "value1": "={{ $json.ok }}", "value2": true }] } },
+      "id": "4",
+      "name": "¿Válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Preparar entrada').first().json;\nconst val = $('SW Validar Filas').first().json;\nreturn [{json:{ idSolicitud: base.idSolicitud, idUsuario: base.idUsuario, observacion: base.observacion, estado: base.estado, filas: val.filas }}];"
+      },
+      "id": "5",
+      "name": "Armar payload versión",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 220]
+    },
+    {
+      "parameters": { "workflowId": "SW-CREAR-VERSION-INMUTABLE", "options": {} },
+      "id": "6",
+      "name": "SW Crear Versión",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [1320, 220]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} },
+      "id": "7",
+      "name": "Responder OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1540, 220]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": { "responseCode": 400 } },
+      "id": "8",
+      "name": "Responder Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1100, 400]
+    }
+  ],
+  "connections": {
+    "Webhook Confirmar": { "main": [[{ "node": "Preparar entrada", "type": "main", "index": 0 }]] },
+    "Preparar entrada": { "main": [[{ "node": "SW Validar Filas", "type": "main", "index": 0 }]] },
+    "SW Validar Filas": { "main": [[{ "node": "¿Válido?", "type": "main", "index": 0 }]] },
+    "¿Válido?": { "main": [[{ "node": "Armar payload versión", "type": "main", "index": 0 }], [{ "node": "Responder Error", "type": "main", "index": 0 }]] },
+    "Armar payload versión": { "main": [[{ "node": "SW Crear Versión", "type": "main", "index": 0 }]] },
+    "SW Crear Versión": { "main": [[{ "node": "Responder OK", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

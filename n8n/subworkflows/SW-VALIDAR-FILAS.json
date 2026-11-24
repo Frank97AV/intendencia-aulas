@@ -1,0 +1,43 @@
+{
+  "name": "SW-VALIDAR-FILAS",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [260, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst filas = Array.isArray(input.filas) ? input.filas : [];\nconst DIAS = ['LUN','MAR','MIE','JUE','VIE','SAB'];\nconst FORMATOS = ['Presencial','Semipresencial'];\nconst TIPOS = ['Normal','Híbrido'];\nconst HORA = /^([01]\\d|2[0-3]):[0-5]\\d$/;\n\nfunction limpio(v){ if(v==null) return null; const t=String(v).trim(); return t.length?t:null; }\nfunction hora(v){ const t=limpio(v); if(!t) return null; return t.length===5?t:t.slice(0,5); }\nfunction normalizarDia(v){\n  const t = limpio(v); if(!t) return null;\n  const n = t.toUpperCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');\n  const mapa = {LUN:'LUN',LUNES:'LUN',MAR:'MAR',MARTES:'MAR',MIE:'MIE',MIER:'MIE',MIERCOLES:'MIE',JUE:'JUE',JUEV:'JUE',JUEVES:'JUE',VIE:'VIE',VIER:'VIE',VIERNES:'VIE',SAB:'SAB',SABADO:'SAB'};\n  if(mapa[n]) return mapa[n];\n  const p3 = n.slice(0,3);\n  if(mapa[p3]) return mapa[p3];\n  return n;\n}\nfunction normalizarTipo(v){\n  const t=limpio(v); if(!t) return null;\n  const n=t.toUpperCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');\n  if(n==='NORMAL') return 'Normal';\n  if(n==='HIBRIDO' || n==='HIBRIDA') return 'Híbrido';\n  return t;\n}\nfunction normalizarFormato(v){\n  const t=limpio(v); if(!t) return null;\n  const n=t.toUpperCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'');\n  if(n==='PRESENCIAL') return 'Presencial';\n  if(n==='SEMIPRESENCIAL') return 'Semipresencial';\n  return t;\n}\n\nif(filas.length===0) return [{json:{ok:false,errores:['Debe registrar al menos una fila de programación.'],filas:[]}}];\nif(filas.length>200) return [{json:{ok:false,errores:['El máximo permitido es 200 filas por versión.'],filas:[]}}];\n\nconst errores=[]; const normalizadas=[]; const vistos=new Map();\nfilas.forEach((fila, idx)=>{\n  const nFila=idx+1;\n  const claveCurso = (limpio(fila.clave_curso ?? fila.claveCurso ?? fila.clave) || '').toUpperCase();\n  const nombreCurso = limpio(fila.nombre_curso ?? fila.nombreCurso);\n  const secuencia = limpio(fila.secuencia);\n  const horario = (limpio(fila.horario) || '').toUpperCase();\n  const vacantesNum = Number(fila.vacantes);\n  const vacantes = Number.isFinite(vacantesNum) ? Math.trunc(vacantesNum) : NaN;\n  const docentes = limpio(fila.docentes);\n  const dia = normalizarDia(fila.dia);\n  const horaInicio = hora(fila.hora_inicio ?? fila.horaInicio);\n  const horaFin = hora(fila.hora_fin ?? fila.horaFin);\n  const formatoCurso = normalizarFormato(fila.formato_curso ?? fila.formatoCurso ?? fila.formato);\n  const tipoAulaSolicitado = normalizarTipo(fila.tipo_aula_solicitado ?? fila.tipoAulaSolicitado ?? fila.tipo_aula ?? fila.tipoAula);\n  const facultadPrograma = limpio(fila.facultad_programa ?? fila.facultadPrograma ?? fila.facultad);\n  const observacionesFacultad = limpio(fila.observaciones_facultad ?? fila.observacionesFacultad ?? fila.observaciones);\n\n  if(!claveCurso) errores.push(`Fila ${nFila}: la clave del curso es obligatoria.`);\n  if(horario.length < 3) errores.push(`Fila ${nFila}: el horario debe tener al menos 3 caracteres.`);\n  if(!Number.isInteger(vacantes) || vacantes < 1) errores.push(`Fila ${nFila}: las vacantes deben ser un entero mayor o igual a 1.`);\n  if(dia && !DIAS.includes(dia)) errores.push(`Fila ${nFila}: el día \"${dia}\" no es válido. Use LUN, MAR, MIE, JUE, VIE o SAB.`);\n  if(horaInicio && !HORA.test(horaInicio)) errores.push(`Fila ${nFila}: la hora de inicio debe tener formato HH:mm (24 horas).`);\n  if(horaFin && !HORA.test(horaFin)) errores.push(`Fila ${nFila}: la hora de fin debe tener formato HH:mm (24 horas).`);\n  if(horaInicio && horaFin && horaFin <= horaInicio) errores.push(`Fila ${nFila}: la hora de fin debe ser posterior a la hora de inicio.`);\n  if(formatoCurso && !FORMATOS.includes(formatoCurso)) errores.push(`Fila ${nFila}: el formato \"${formatoCurso}\" no es válido.`);\n  if(tipoAulaSolicitado && !TIPOS.includes(tipoAulaSolicitado)) errores.push(`Fila ${nFila}: el tipo de aula \"${tipoAulaSolicitado}\" no es válido.`);\n  if(!facultadPrograma) errores.push(`Fila ${nFila}: la facultad/programa es obligatoria.`);\n\n  if(claveCurso && dia && horaInicio){\n    const k = `${claveCurso}|${dia}|${horaInicio}|${horario}|${secuencia||''}`;\n    if(vistos.has(k)) errores.push(`Fila ${nFila}: duplica la programación de la fila ${vistos.get(k)}.`);\n    else vistos.set(k, nFila);\n  }\n\n  normalizadas.push({\n    claveCurso, nombreCurso, secuencia, horario, vacantes: Number.isInteger(vacantes)?vacantes:0,\n    docentes, dia, horaInicio, horaFin, formatoCurso, tipoAulaSolicitado, facultadPrograma: facultadPrograma||'', observacionesFacultad\n  });\n});\n\nreturn [{json:{ok: errores.length===0, errores, filas: normalizadas}}];"
+      },
+      "id": "2",
+      "name": "Validar y normalizar filas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validar y normalizar filas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

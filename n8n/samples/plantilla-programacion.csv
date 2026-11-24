@@ -1,0 +1,2 @@
+clave_curso,nombre_curso,secuencia,horario,vacantes,docentes,dia,hora_inicio,hora_fin,formato_curso,tipo_aula,facultad_programa,observaciones
+IS-101,Introducción a Sistemas,01,G01,30,Docente Demo,LUN,08:00,10:00,Presencial,Normal,Ingeniería de Sistemas,Requiere proyector

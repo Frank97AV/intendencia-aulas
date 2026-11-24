@@ -1,0 +1,46 @@
+{
+  "name": "05-importar-excel-preview",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "import/preview", "responseMode": "responseNode", "options": {} },
+      "id": "1",
+      "name": "Webhook Preview",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Espera JSON: { filas: [...] } o { rows: [...] }\nconst body = $json.body ?? $json;\nconst filas = body.filas || body.rows || [];\nreturn [{json:{filas}}];"
+      },
+      "id": "2",
+      "name": "Extraer filas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": { "workflowId": "SW-VALIDAR-FILAS", "options": {} },
+      "id": "3",
+      "name": "SW Validar Filas",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [660, 300]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} },
+      "id": "4",
+      "name": "Responder Preview",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [880, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Preview": { "main": [[{ "node": "Extraer filas", "type": "main", "index": 0 }]] },
+    "Extraer filas": { "main": [[{ "node": "SW Validar Filas", "type": "main", "index": 0 }]] },
+    "SW Validar Filas": { "main": [[{ "node": "Responder Preview", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

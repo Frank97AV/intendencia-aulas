@@ -1,0 +1,65 @@
+{
+  "name": "07-exportar-version",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "GET", "path": "export/version/:id", "responseMode": "responseNode", "options": {} },
+      "id": "1",
+      "name": "Webhook Export",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT v.id_version, v.numero_version, v.fecha_version, s.id_solicitud, s.id_unidad, s.estado, c.nombre AS ciclo, ua.nombre AS unidad\nFROM versiones v\nJOIN solicitudes s ON s.id_solicitud=v.id_solicitud\nJOIN ciclos c ON c.id_ciclo=s.id_ciclo\nJOIN unidades_academicas ua ON ua.id_unidad=s.id_unidad\nWHERE v.id_version = $1\nLIMIT 1;",
+        "additionalFields": { "queryParams": "={{ [$json.params.id] }}" }
+      },
+      "id": "2",
+      "name": "Obtener versión",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [440, 300],
+      "credentials": { "postgres": { "name": "Postgres Intendencia" } }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT d.id_detalle, d.clave_curso, d.nombre_curso, d.secuencia, d.horario, d.vacantes, d.docentes, d.dia, d.hora_inicio, d.hora_fin, d.formato_curso, d.tipo_aula_solicitado, d.facultad_programa, d.observaciones_facultad, a.codigo AS aula_codigo, d.observaciones_intendencia\nFROM detalle_version d\nLEFT JOIN aulas a ON a.id_aula=d.id_aula\nWHERE d.id_version = $1\nORDER BY d.id_detalle;",
+        "additionalFields": { "queryParams": "={{ [$('Webhook Export').first().json.params.id] }}" }
+      },
+      "id": "3",
+      "name": "Obtener detalle",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [660, 300],
+      "credentials": { "postgres": { "name": "Postgres Intendencia" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const version = $('Obtener versión').first().json;\nconst rol = ($('Webhook Export').first().json.query?.rol || 'SOLICITANTE').toUpperCase();\nconst incluirInternos = rol === 'ADMIN';\nconst filas = $input.all().map((i, idx) => {\n  const f = i.json;\n  const base = {\n    solicitud: version.id_solicitud,\n    ciclo: version.ciclo,\n    unidad: version.unidad,\n    version: version.numero_version,\n    n: idx + 1,\n  };\n  if (incluirInternos) base.aula = f.aula_codigo || 'Pendiente';\n  Object.assign(base, {\n    clave_curso: f.clave_curso,\n    nombre_curso: f.nombre_curso || '',\n    secuencia: f.secuencia || '',\n    horario: f.horario || '',\n    vacantes: f.vacantes,\n    docentes: f.docentes || '',\n    dia: f.dia || '',\n    hora_inicio: f.hora_inicio || '',\n    hora_fin: f.hora_fin || '',\n    formato_curso: f.formato_curso || '',\n    tipo_aula_solicitado: f.tipo_aula_solicitado || '',\n    facultad_programa: f.facultad_programa || '',\n    observaciones: f.observaciones_facultad || ''\n  });\n  if (incluirInternos) base.observaciones_intendencia = f.observaciones_intendencia || '';\n  return base;\n});\nreturn [{json:{ok:true, version, rol, filas}}];"
+      },
+      "id": "4",
+      "name": "Filtrar por rol",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 300]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} },
+      "id": "5",
+      "name": "Responder Export",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1100, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Export": { "main": [[{ "node": "Obtener versión", "type": "main", "index": 0 }]] },
+    "Obtener versión": { "main": [[{ "node": "Obtener detalle", "type": "main", "index": 0 }]] },
+    "Obtener detalle": { "main": [[{ "node": "Filtrar por rol", "type": "main", "index": 0 }]] },
+    "Filtrar por rol": { "main": [[{ "node": "Responder Export", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "03-ciclos-ventana",
+  "nodes": [
+    { "parameters": { "httpMethod": "POST", "path": "ciclos/accion", "responseMode": "responseNode", "options": {} }, "id": "1", "name": "Webhook Ciclos", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [240, 300] },
+    { "parameters": { "jsCode": "// Starter: crear/activar/desactivar ciclo.\n// Regla: solo un ciclo activo (índice único parcial en BD).\nreturn [{json:{ok:true, mensaje:'Implementar acciones de ciclo', input:$json.body ?? $json}}];" }, "id": "2", "name": "Acción ciclo (starter)", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [500, 300] },
+    { "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} }, "id": "3", "name": "Responder", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.1, "position": [740, 300] }
+  ],
+  "connections": {
+    "Webhook Ciclos": { "main": [[{ "node": "Acción ciclo (starter)", "type": "main", "index": 0 }]] },
+    "Acción ciclo (starter)": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

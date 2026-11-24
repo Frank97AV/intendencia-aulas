@@ -1,0 +1,14 @@
+{
+  "name": "02-catalogos-crud",
+  "nodes": [
+    { "parameters": { "httpMethod": "POST", "path": "catalogos/crud", "responseMode": "responseNode", "options": {} }, "id": "1", "name": "Webhook Catálogos", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [240, 300] },
+    { "parameters": { "jsCode": "// Starter: enrutar por body.entidad (unidades,cursos,aulas,usuarios)\n// Implementar CRUD con nodos Postgres y validación ADMIN.\nreturn [{json:{ok:true, mensaje:'Implementar CRUD por entidad', input:$json.body ?? $json}}];" }, "id": "2", "name": "Router CRUD (starter)", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [500, 300] },
+    { "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} }, "id": "3", "name": "Responder", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.1, "position": [740, 300] }
+  ],
+  "connections": {
+    "Webhook Catálogos": { "main": [[{ "node": "Router CRUD (starter)", "type": "main", "index": 0 }]] },
+    "Router CRUD (starter)": { "main": [[{ "node": "Responder", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

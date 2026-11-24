@@ -1,0 +1,98 @@
+{
+  "name": "SW-CREAR-VERSION-INMUTABLE",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const i = $input.first().json;\n// Espera: {idSolicitud, idUsuario, observacion, estado, filas:[...]}\nif(!i.idSolicitud || !i.idUsuario || !Array.isArray(i.filas) || i.filas.length===0){\n  throw new Error('Entrada inválida para crear versión');\n}\nreturn [{json:i}];"
+      },
+      "id": "2",
+      "name": "Validar entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "BEGIN;\nWITH nextv AS (\n  SELECT COALESCE(MAX(numero_version),0)+1 AS n\n  FROM versiones WHERE id_solicitud = $1\n), insv AS (\n  INSERT INTO versiones (id_solicitud, numero_version, id_usuario, observacion)\n  SELECT $1, n, $2, $3 FROM nextv\n  RETURNING id_version, numero_version\n)\nSELECT id_version, numero_version FROM insv;\n",
+        "additionalFields": {
+          "queryParams": "={{ [$json.idSolicitud, $json.idUsuario, $json.observacion || null] }}"
+        }
+      },
+      "id": "3",
+      "name": "Crear versión (BEGIN)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [700, 300],
+      "credentials": { "postgres": { "name": "Postgres Intendencia" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Validar entrada').first().json;\nconst v = $input.first().json;\nconst filas = base.filas.map(f => ({\n  idVersion: v.id_version,\n  idCurso: f.idCurso ?? null,\n  claveCurso: f.claveCurso,\n  nombreCurso: f.nombreCurso ?? null,\n  secuencia: f.secuencia ?? null,\n  horario: f.horario ?? null,\n  vacantes: f.vacantes,\n  docentes: f.docentes ?? null,\n  dia: f.dia ?? null,\n  horaInicio: f.horaInicio ?? null,\n  horaFin: f.horaFin ?? null,\n  formatoCurso: f.formatoCurso ?? null,\n  tipoAulaSolicitado: f.tipoAulaSolicitado ?? null,\n  facultadPrograma: f.facultadPrograma ?? null,\n  observacionesFacultad: f.observacionesFacultad ?? null\n}));\nreturn filas.map(f=>({json:{...f, _idSolicitud: base.idSolicitud, _estado: base.estado || 'REGISTRADA', _numeroVersion: v.numero_version, _idVersion: v.id_version}}));"
+      },
+      "id": "4",
+      "name": "Expandir filas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [920, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO detalle_version (\n  id_version,id_curso,clave_curso,nombre_curso,secuencia,horario,vacantes,docentes,dia,hora_inicio,hora_fin,formato_curso,tipo_aula_solicitado,facultad_programa,observaciones_facultad\n) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15);",
+        "additionalFields": {
+          "queryParams": "={{ [$json.idVersion,$json.idCurso,$json.claveCurso,$json.nombreCurso,$json.secuencia,$json.horario,$json.vacantes,$json.docentes,$json.dia,$json.horaInicio,$json.horaFin,$json.formatoCurso,$json.tipoAulaSolicitado,$json.facultadPrograma,$json.observacionesFacultad] }}"
+        }
+      },
+      "id": "5",
+      "name": "Insertar detalle",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1140, 300],
+      "credentials": { "postgres": { "name": "Postgres Intendencia" } }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE solicitudes SET estado=$2, actualizado_en=NOW() WHERE id_solicitud=$1;\nCOMMIT;",
+        "additionalFields": {
+          "queryParams": "={{ [$('Expandir filas').first().json._idSolicitud, $('Expandir filas').first().json._estado] }}"
+        }
+      },
+      "id": "6",
+      "name": "Actualizar solicitud + COMMIT",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1360, 300],
+      "credentials": { "postgres": { "name": "Postgres Intendencia" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const f = $('Expandir filas').first().json;\nreturn [{json:{ok:true, idVersion:f._idVersion, numeroVersion:f._numeroVersion, idSolicitud:f._idSolicitud}}];"
+      },
+      "id": "7",
+      "name": "Respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1580, 300]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": { "main": [[{ "node": "Validar entrada", "type": "main", "index": 0 }]] },
+    "Validar entrada": { "main": [[{ "node": "Crear versión (BEGIN)", "type": "main", "index": 0 }]] },
+    "Crear versión (BEGIN)": { "main": [[{ "node": "Expandir filas", "type": "main", "index": 0 }]] },
+    "Expandir filas": { "main": [[{ "node": "Insertar detalle", "type": "main", "index": 0 }]] },
+    "Insertar detalle": { "main": [[{ "node": "Actualizar solicitud + COMMIT", "type": "main", "index": 0 }]] },
+    "Actualizar solicitud + COMMIT": { "main": [[{ "node": "Respuesta", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}
