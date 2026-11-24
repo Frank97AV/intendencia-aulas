@@ -26,7 +26,7 @@ MVP funcional para digitalizar la solicitud, programación, versionado y asignac
 └── Documentacion_Integral_Intendencia_Aulas.docx
 ```
 
-## Arranque rápido
+## Arranque rápidooSssssssss
 
 ```bash
 cd app
